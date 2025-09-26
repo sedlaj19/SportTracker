@@ -2,6 +2,7 @@ package com.sporttracker.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sporttracker.domain.model.ActivityType
 import com.sporttracker.domain.model.SportActivity
 import com.sporttracker.domain.model.StorageType
 import com.sporttracker.domain.usecase.SaveActivityUseCase
@@ -44,6 +45,7 @@ class AddEditActivityViewModel(
                                 name = it.name,
                                 location = it.location,
                                 durationMinutes = it.durationMinutes,
+                                selectedActivityType = it.activityType,
                                 selectedStorage = it.storageType,
                                 isLoading = false,
                                 isEditMode = true
@@ -85,6 +87,10 @@ class AddEditActivityViewModel(
         }
     }
 
+    fun updateActivityType(activityType: ActivityType) {
+        _uiState.update { it.copy(selectedActivityType = activityType) }
+    }
+
     fun updateStorageType(storageType: StorageType) {
         _uiState.update { it.copy(selectedStorage = storageType) }
     }
@@ -118,6 +124,7 @@ class AddEditActivityViewModel(
                     name = state.name,
                     location = state.location,
                     durationMinutes = state.durationMinutes,
+                    activityType = state.selectedActivityType,
                     storageType = state.selectedStorage
                 )
             } else {
@@ -126,6 +133,7 @@ class AddEditActivityViewModel(
                     name = state.name,
                     location = state.location,
                     durationMinutes = state.durationMinutes,
+                    activityType = state.selectedActivityType,
                     storageType = state.selectedStorage
                 )
             }

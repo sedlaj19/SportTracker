@@ -2,6 +2,7 @@ package com.sporttracker.data.local.database
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.sporttracker.domain.model.ActivityType
 import com.sporttracker.domain.model.SportActivity
 import com.sporttracker.domain.model.StorageType
 import com.sporttracker.domain.model.SyncStatus
@@ -13,6 +14,7 @@ data class ActivityEntity(
     val name: String,
     val location: String,
     val durationMinutes: Int,
+    val activityType: ActivityType,
     val storageType: StorageType,
     val createdAt: Long,
     val lastModified: Long,
@@ -27,6 +29,7 @@ fun ActivityEntity.toDomainModel(): SportActivity {
         name = name,
         location = location,
         durationMinutes = durationMinutes,
+        activityType = activityType,
         storageType = storageType,
         createdAt = createdAt,
         lastModified = lastModified,
@@ -42,6 +45,7 @@ fun SportActivity.toActivityEntity(): ActivityEntity {
         name = name,
         location = location,
         durationMinutes = durationMinutes,
+        activityType = activityType,
         storageType = storageType,
         createdAt = createdAt,
         lastModified = lastModified,

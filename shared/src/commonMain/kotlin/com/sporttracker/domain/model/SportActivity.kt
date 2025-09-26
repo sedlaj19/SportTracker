@@ -11,6 +11,7 @@ data class SportActivity(
     val name: String,
     val location: String,
     val durationMinutes: Int,
+    val activityType: ActivityType = ActivityType.OTHER,
     val storageType: StorageType,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
     val lastModified: Long = Clock.System.now().toEpochMilliseconds(),

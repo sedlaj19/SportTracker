@@ -21,6 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.sporttracker.domain.model.ActivityType
 import com.sporttracker.domain.model.SportActivity
 import com.sporttracker.domain.model.StorageType
 import com.sporttracker.domain.util.NetworkMonitor
@@ -48,7 +49,7 @@ fun ActivityListScreen(
     val isOnline by networkMonitor.isOnline.collectAsState(initial = true)
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-    var selectedActivityFilter by remember { mutableStateOf<String?>(null) }
+    var selectedActivityFilter by remember { mutableStateOf<ActivityType?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -205,27 +206,12 @@ fun ActivityListScreen(
                             }
                         }
 
-                        // Activity type filter (optional enhancement)
+                        // Activity type filter using proper ActivityType enum
                         if (uiState.activities.isNotEmpty()) {
                             val activityTypes = uiState.activities
-                                .mapNotNull { activity ->
-                                    when {
-                                        activity.name.contains("běh", ignoreCase = true) ||
-                                        activity.name.contains("run", ignoreCase = true) -> "Běh"
-                                        activity.name.contains("kolo", ignoreCase = true) ||
-                                        activity.name.contains("bike", ignoreCase = true) ||
-                                        activity.name.contains("cycling", ignoreCase = true) -> "Kolo"
-                                        activity.name.contains("chůze", ignoreCase = true) ||
-                                        activity.name.contains("walk", ignoreCase = true) -> "Chůze"
-                                        activity.name.contains("plavání", ignoreCase = true) ||
-                                        activity.name.contains("swim", ignoreCase = true) -> "Plavání"
-                                        activity.name.contains("posilovna", ignoreCase = true) ||
-                                        activity.name.contains("gym", ignoreCase = true) -> "Posilovna"
-                                        else -> null
-                                    }
-                                }
+                                .map { it.activityType }
                                 .distinct()
-                                .sorted()
+                                .sortedBy { it.czechName }
 
                             if (activityTypes.isNotEmpty()) {
                                 LazyRow(
@@ -246,7 +232,7 @@ fun ActivityListScreen(
                                             onClick = {
                                                 selectedActivityFilter = if (selectedActivityFilter == type) null else type
                                             },
-                                            label = { Text(type) }
+                                            label = { Text(type.czechName) }
                                         )
                                     }
                                 }
@@ -261,20 +247,7 @@ fun ActivityListScreen(
 
                         if (selectedActivityFilter != null) {
                             filteredActivities = filteredActivities.filter { activity ->
-                                when(selectedActivityFilter) {
-                                    "Běh" -> activity.name.contains("běh", ignoreCase = true) ||
-                                            activity.name.contains("run", ignoreCase = true)
-                                    "Kolo" -> activity.name.contains("kolo", ignoreCase = true) ||
-                                             activity.name.contains("bike", ignoreCase = true) ||
-                                             activity.name.contains("cycling", ignoreCase = true)
-                                    "Chůze" -> activity.name.contains("chůze", ignoreCase = true) ||
-                                              activity.name.contains("walk", ignoreCase = true)
-                                    "Plavání" -> activity.name.contains("plavání", ignoreCase = true) ||
-                                                activity.name.contains("swim", ignoreCase = true)
-                                    "Posilovna" -> activity.name.contains("posilovna", ignoreCase = true) ||
-                                                  activity.name.contains("gym", ignoreCase = true)
-                                    else -> true
-                                }
+                                activity.activityType == selectedActivityFilter
                             }
                         }
 

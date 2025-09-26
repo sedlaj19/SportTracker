@@ -1,5 +1,6 @@
 package com.sporttracker.presentation.model
 
+import com.sporttracker.domain.model.ActivityType
 import com.sporttracker.domain.model.SportActivity
 import com.sporttracker.domain.model.StorageType
 
@@ -25,6 +26,7 @@ data class AddEditActivityUiState(
     val name: String = "",
     val location: String = "",
     val durationMinutes: Int = 0,
+    val selectedActivityType: ActivityType = ActivityType.OTHER,
     val selectedStorage: StorageType = StorageType.LOCAL,
     val isLoading: Boolean = false,
     val validationErrors: Map<String, String> = emptyMap(),

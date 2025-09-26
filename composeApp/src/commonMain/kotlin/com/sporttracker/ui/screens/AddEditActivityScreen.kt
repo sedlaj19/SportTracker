@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.sporttracker.domain.model.ActivityType
 import com.sporttracker.domain.model.StorageType
 import com.sporttracker.presentation.viewmodel.AddEditActivityViewModel
 import com.sporttracker.ui.components.DurationPickerDialog
@@ -38,7 +39,6 @@ fun AddEditActivityScreen(
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var showDurationPicker by remember { mutableStateOf(false) }
-    var selectedActivityType by remember { mutableStateOf<ActivityType?>(null) }
 
     LaunchedEffect(activityId) {
         viewModel.setActivityId(activityId)
@@ -105,10 +105,9 @@ fun AddEditActivityScreen(
                 items(ActivityType.entries) { type ->
                     ActivityTypeChip(
                         type = type,
-                        selected = selectedActivityType == type ||
-                                  (selectedActivityType == null && uiState.name.contains(type.czechName, ignoreCase = true)),
+                        selected = uiState.selectedActivityType == type,
                         onClick = {
-                            selectedActivityType = type
+                            viewModel.updateActivityType(type)
                             if (uiState.name.isEmpty() || ActivityType.entries.any {
                                 it.czechName == uiState.name || it.englishName == uiState.name
                             }) {
@@ -126,21 +125,20 @@ fun AddEditActivityScreen(
                 onValueChange = { name ->
                     viewModel.updateName(name)
                     // Auto-select type based on name
-                    selectedActivityType = ActivityType.entries.find {
+                    val detectedType = ActivityType.entries.find {
                         name.contains(it.czechName, ignoreCase = true) ||
                         name.contains(it.englishName, ignoreCase = true)
                     }
+                    detectedType?.let { viewModel.updateActivityType(it) }
                 },
                 label = { Text("Název aktivity") },
-                placeholder = { Text(selectedActivityType?.czechName ?: "Napište vlastní název") },
+                placeholder = { Text(uiState.selectedActivityType.czechName) },
                 leadingIcon = {
-                    selectedActivityType?.let { type ->
-                        Icon(
-                            imageVector = type.icon,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
+                    Icon(
+                        imageVector = uiState.selectedActivityType.getIcon(),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 },
                 isError = uiState.validationErrors.containsKey("name"),
                 supportingText = {
@@ -176,6 +174,31 @@ fun AddEditActivityScreen(
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(start = 16.dp, top = 4.dp)
                 )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Typ aktivity:",
+                style = MaterialTheme.typography.labelLarge
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(horizontal = 0.dp)
+            ) {
+                items(ActivityType.entries) { type ->
+                    ActivityTypeChip(
+                        type = type,
+                        selected = uiState.selectedActivityType == type,
+                        onClick = {
+                            viewModel.updateActivityType(type)
+                            viewModel.updateDuration(type.defaultDurationMinutes)
+                        }
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -247,60 +270,15 @@ private fun formatDurationForEdit(minutes: Int): String {
     }
 }
 
-enum class ActivityType(
-    val czechName: String,
-    val englishName: String,
-    val icon: ImageVector,
-    val defaultDurationMinutes: Int = 30
-) {
-    RUNNING(
-        czechName = "Běh",
-        englishName = "Running",
-        icon = Icons.AutoMirrored.Filled.DirectionsRun,
-        defaultDurationMinutes = 30
-    ),
-    CYCLING(
-        czechName = "Kolo",
-        englishName = "Cycling",
-        icon = Icons.AutoMirrored.Filled.DirectionsBike,
-        defaultDurationMinutes = 45
-    ),
-    WALKING(
-        czechName = "Chůze",
-        englishName = "Walking",
-        icon = Icons.AutoMirrored.Filled.DirectionsWalk,
-        defaultDurationMinutes = 60
-    ),
-    SWIMMING(
-        czechName = "Plavání",
-        englishName = "Swimming",
-        icon = Icons.Default.Pool,
-        defaultDurationMinutes = 30
-    ),
-    GYM(
-        czechName = "Posilovna",
-        englishName = "Gym",
-        icon = Icons.Default.FitnessCenter,
-        defaultDurationMinutes = 60
-    ),
-    HIKING(
-        czechName = "Turistika",
-        englishName = "Hiking",
-        icon = Icons.Default.Terrain,
-        defaultDurationMinutes = 120
-    ),
-    YOGA(
-        czechName = "Jóga",
-        englishName = "Yoga",
-        icon = Icons.Default.SelfImprovement,
-        defaultDurationMinutes = 45
-    ),
-    OTHER(
-        czechName = "Jiné",
-        englishName = "Other",
-        icon = Icons.Default.Sports,
-        defaultDurationMinutes = 30
-    )
+fun ActivityType.getIcon(): ImageVector = when (this) {
+    ActivityType.RUNNING -> Icons.AutoMirrored.Filled.DirectionsRun
+    ActivityType.CYCLING -> Icons.AutoMirrored.Filled.DirectionsBike
+    ActivityType.WALKING -> Icons.AutoMirrored.Filled.DirectionsWalk
+    ActivityType.SWIMMING -> Icons.Default.Pool
+    ActivityType.GYM -> Icons.Default.FitnessCenter
+    ActivityType.HIKING -> Icons.Default.Terrain
+    ActivityType.YOGA -> Icons.Default.SelfImprovement
+    ActivityType.OTHER -> Icons.Default.Sports
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -322,7 +300,7 @@ fun ActivityTypeChip(
         },
         leadingIcon = {
             Icon(
-                imageVector = type.icon,
+                imageVector = type.getIcon(),
                 contentDescription = null,
                 modifier = Modifier.size(18.dp)
             )
