@@ -69,6 +69,27 @@ Kotlin Multiplatform (KMP) + Compose Multiplatform (CMP) aplikace pro sledován�
   - ✅ Replace read-only duration field
   - ✅ Custom NumberPicker with scroll UI
   - ✅ DurationDisplay card component
+- ✅ **Landscape mode support** (COMPLETED)
+  - ✅ **AddEditActivityScreen landscape layout** (COMPLETED)
+    - ✅ Optimized two-column layout: Configuration (35%) | Activity data (65%)
+    - ✅ All 8 ActivityTypes accessible with scrollable left panel
+    - ✅ Enhanced visual hierarchy with "KONFIGURACE" and "ÚDAJE AKTIVITY" headers
+    - ✅ Proper proportions for better space utilization
+    - ✅ Consistent scrollable design with ActivityListScreen
+  - ✅ **ActivityListScreen landscape layout** (COMPLETED)
+    - ✅ Two-column layout: Filter panel (30%) | Activities grid (70%)
+    - ✅ Scrollable filter panel with vertical storage and activity type filters
+    - ✅ LazyVerticalGrid with 2 columns for activities
+    - ✅ All functionality preserved (expand, delete, edit)
+  - ✅ **Orientation detection implementation** (COMPLETED)
+    - ✅ Proper expect/actual pattern for multiplatform compatibility
+    - ✅ Real orientation detection using LocalConfiguration on Android
+    - ✅ Seamless transitions between portrait/landscape modes
+  - ✅ **Build stability and testing** (COMPLETED)
+    - ✅ Android APK builds successfully
+    - ✅ All landscape interactions working correctly
+    - ✅ State preservation during rotation
+    - ✅ Performance optimized for both orientations
 - [🔴] **Firebase integration** (NOT IMPLEMENTED - using Mock)
   - ✅ Created FIREBASE_SETUP.md documentation
   - ✅ Added google-services plugin to build files
@@ -117,14 +138,19 @@ Kotlin Multiplatform (KMP) + Compose Multiplatform (CMP) aplikace pro sledován�
 *Following features will be implemented AFTER MVP is complete and stable*
 
 ### 🟢 Enhanced User Experience
-- [🟡] **Advanced activity list features**
-  - ✅ Delete functionality with confirmation dialog
+- [🟡] **Advanced activity management features**
+  - ✅ Delete functionality with confirmation dialog (from list view)
+  - [ ] **Delete functionality in edit screen** - add delete button/action to AddEditActivityScreen
   - [ ] Swipe-to-delete gesture
   - [ ] Pull-to-refresh implementation
   - [ ] Activity search by name/location
 - [🟡] **Activity filtering system**
   - ✅ Filter by activity type (dynamic)
-  - [ ] Filter by storage type (Local/Remote)
+  - ✅ Filter by storage type (Local/Remote)
+  - [ ] **Empty state for filtered results** - placeholder when filters result in no activities
+    - [ ] "No activities match your current filters" message
+    - [ ] Suggestions to adjust filters or add new activities
+    - [ ] Different messages for specific filter combinations (e.g., "No local activities found")
   - [ ] Date range filtering
   - [ ] Activity duration filtering
 - [ ] **Activity details screen**
@@ -251,9 +277,11 @@ Kotlin Multiplatform (KMP) + Compose Multiplatform (CMP) aplikace pro sledován�
 
 **⚠️ Note:** App crash fixes moved to MVP Polish phase - focusing on core features first
 
-**📊 Progress: ~85% MVP Features Complete**
+**📊 Progress: ~90% MVP Features Complete** (Landscape mode fully implemented and polished)
 
 **⚠️ IMPORTANT**: Firebase integration is NOT working. The app uses Mock services only. All data is stored locally even when "Remote" option is selected.
+
+**🔴 NEXT FOCUS**: Firebase integration (blocked by JVM 17 requirement) or moving to POST-MVP enhancements.
 
 ---
 
@@ -267,6 +295,9 @@ Kotlin Multiplatform (KMP) + Compose Multiplatform (CMP) aplikace pro sledován�
 - UI with filters, icons, and animations
 - Navigation between screens
 - Error handling and offline indicators
+- **Complete landscape mode support** for both screens
+- Responsive design with proper orientation detection
+- Scrollable panels and optimized layouts
 
 ### ❌ What Doesn't Work:
 - Firebase cloud synchronization (using Mock only)

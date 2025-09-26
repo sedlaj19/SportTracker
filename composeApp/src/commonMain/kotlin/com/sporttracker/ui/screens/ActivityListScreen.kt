@@ -7,7 +7,12 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.automirrored.filled.DirectionsRun
@@ -28,6 +33,8 @@ import com.sporttracker.domain.util.NetworkMonitor
 import com.sporttracker.presentation.model.FilterType
 import com.sporttracker.presentation.viewmodel.ActivityListViewModel
 import com.sporttracker.ui.components.*
+import com.sporttracker.ui.utils.getOrientationMode
+import com.sporttracker.ui.utils.OrientationMode
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -50,6 +57,7 @@ fun ActivityListScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     var selectedActivityFilter by remember { mutableStateOf<ActivityType?>(null) }
+    val orientationMode = getOrientationMode()
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -134,156 +142,367 @@ fun ActivityListScreen(
                     )
                 }
                 else -> {
-                    Column(
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        // Storage type filter (All | Local | Remote) - REQUIRED BY SPECIFICATION
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    when (orientationMode) {
+                        OrientationMode.PORTRAIT -> {
+                            PortraitActivityLayout(
+                                uiState = uiState,
+                                viewModel = viewModel,
+                                selectedActivityFilter = selectedActivityFilter,
+                                onActivityFilterChange = { selectedActivityFilter = it },
+                                modifier = Modifier.fillMaxSize()
                             )
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(12.dp)
-                            ) {
-                                Text(
-                                    text = "Typ úložiště",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(bottom = 8.dp)
-                                )
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    StorageFilterType.entries.forEach { filterType ->
-                                        FilterChip(
-                                            selected = when(uiState.filter) {
-                                                FilterType.ALL -> filterType == StorageFilterType.ALL
-                                                FilterType.LOCAL -> filterType == StorageFilterType.LOCAL
-                                                FilterType.REMOTE -> filterType == StorageFilterType.REMOTE
-                                            },
-                                            onClick = {
-                                                viewModel.setFilter(
-                                                    when(filterType) {
-                                                        StorageFilterType.ALL -> FilterType.ALL
-                                                        StorageFilterType.LOCAL -> FilterType.LOCAL
-                                                        StorageFilterType.REMOTE -> FilterType.REMOTE
-                                                    }
-                                                )
-                                            },
-                                            label = {
-                                                Row(
-                                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    Icon(
-                                                        imageVector = when (filterType) {
-                                                            StorageFilterType.ALL -> Icons.Default.Storage
-                                                            StorageFilterType.LOCAL -> Icons.Default.PhoneAndroid
-                                                            StorageFilterType.REMOTE -> Icons.Default.Cloud
-                                                        },
-                                                        contentDescription = null,
-                                                        modifier = Modifier.size(16.dp)
-                                                    )
-                                                    Text(filterType.label)
-                                                }
-                                            },
-                                            colors = FilterChipDefaults.filterChipColors(
-                                                selectedContainerColor = when (filterType) {
-                                                    StorageFilterType.LOCAL -> MaterialTheme.colorScheme.primaryContainer
-                                                    StorageFilterType.REMOTE -> MaterialTheme.colorScheme.secondaryContainer
-                                                    StorageFilterType.ALL -> MaterialTheme.colorScheme.tertiaryContainer
-                                                }
-                                            ),
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                    }
-                                }
-                            }
                         }
-
-                        // Activity type filter using proper ActivityType enum
-                        if (uiState.activities.isNotEmpty()) {
-                            val activityTypes = uiState.activities
-                                .map { it.activityType }
-                                .distinct()
-                                .sortedBy { it.czechName }
-
-                            if (activityTypes.isNotEmpty()) {
-                                LazyRow(
-                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    item {
-                                        FilterChip(
-                                            selected = selectedActivityFilter == null,
-                                            onClick = { selectedActivityFilter = null },
-                                            label = { Text("Všechny sporty") }
-                                        )
-                                    }
-                                    items(activityTypes.size) { index ->
-                                        val type = activityTypes[index]
-                                        FilterChip(
-                                            selected = selectedActivityFilter == type,
-                                            onClick = {
-                                                selectedActivityFilter = if (selectedActivityFilter == type) null else type
-                                            },
-                                            label = { Text(type.czechName) }
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        HorizontalDivider()
-
-                        // Activities are already filtered by storage type in ViewModel
-                        // Only apply activity type filter in UI (this is a UI-only enhancement)
-                        var filteredActivities = uiState.activities
-
-                        if (selectedActivityFilter != null) {
-                            filteredActivities = filteredActivities.filter { activity ->
-                                activity.activityType == selectedActivityFilter
-                            }
-                        }
-
-                        // Display counter for filtered results
-                        if (uiState.filter != FilterType.ALL || selectedActivityFilter != null) {
-                            Surface(
-                                color = MaterialTheme.colorScheme.secondaryContainer,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 4.dp)
-                            ) {
-                                Text(
-                                    text = "Zobrazeno ${filteredActivities.size} z ${uiState.totalActivitiesCount} aktivit",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    modifier = Modifier.padding(8.dp)
-                                )
-                            }
-                        }
-
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(
-                                items = filteredActivities,
-                                key = { it.id }
-                            ) { activity ->
-                                ActivityCard(
-                                    activity = activity,
-                                    onClick = { viewModel.onEditClick(activity.id) },
-                                    onDelete = { viewModel.deleteActivity(activity) }
-                                )
-                            }
+                        OrientationMode.LANDSCAPE -> {
+                            LandscapeActivityLayout(
+                                uiState = uiState,
+                                viewModel = viewModel,
+                                selectedActivityFilter = selectedActivityFilter,
+                                onActivityFilterChange = { selectedActivityFilter = it },
+                                modifier = Modifier.fillMaxSize()
+                            )
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PortraitActivityLayout(
+    uiState: com.sporttracker.presentation.model.ActivityListUiState,
+    viewModel: ActivityListViewModel,
+    selectedActivityFilter: ActivityType?,
+    onActivityFilterChange: (ActivityType?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        // Storage type filter (All | Local | Remote) - REQUIRED BY SPECIFICATION
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(12.dp)
+            ) {
+                Text(
+                    text = "Typ úložiště",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    StorageFilterType.entries.forEach { filterType ->
+                        FilterChip(
+                            selected = when(uiState.filter) {
+                                FilterType.ALL -> filterType == StorageFilterType.ALL
+                                FilterType.LOCAL -> filterType == StorageFilterType.LOCAL
+                                FilterType.REMOTE -> filterType == StorageFilterType.REMOTE
+                            },
+                            onClick = {
+                                viewModel.setFilter(
+                                    when(filterType) {
+                                        StorageFilterType.ALL -> FilterType.ALL
+                                        StorageFilterType.LOCAL -> FilterType.LOCAL
+                                        StorageFilterType.REMOTE -> FilterType.REMOTE
+                                    }
+                                )
+                            },
+                            label = {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = when (filterType) {
+                                            StorageFilterType.ALL -> Icons.Default.Storage
+                                            StorageFilterType.LOCAL -> Icons.Default.PhoneAndroid
+                                            StorageFilterType.REMOTE -> Icons.Default.Cloud
+                                        },
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Text(filterType.label)
+                                }
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = when (filterType) {
+                                    StorageFilterType.LOCAL -> MaterialTheme.colorScheme.primaryContainer
+                                    StorageFilterType.REMOTE -> MaterialTheme.colorScheme.secondaryContainer
+                                    StorageFilterType.ALL -> MaterialTheme.colorScheme.tertiaryContainer
+                                }
+                            ),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Activity type filter using proper ActivityType enum
+        if (uiState.activities.isNotEmpty()) {
+            val activityTypes = uiState.activities
+                .map { it.activityType }
+                .distinct()
+                .sortedBy { it.czechName }
+
+            if (activityTypes.isNotEmpty()) {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    item {
+                        FilterChip(
+                            selected = selectedActivityFilter == null,
+                            onClick = { onActivityFilterChange(null) },
+                            label = { Text("Všechny sporty") }
+                        )
+                    }
+                    items(activityTypes.size) { index ->
+                        val type = activityTypes[index]
+                        FilterChip(
+                            selected = selectedActivityFilter == type,
+                            onClick = {
+                                onActivityFilterChange(if (selectedActivityFilter == type) null else type)
+                            },
+                            label = { Text(type.czechName) }
+                        )
+                    }
+                }
+            }
+        }
+
+        HorizontalDivider()
+
+        // Activities are already filtered by storage type in ViewModel
+        // Only apply activity type filter in UI (this is a UI-only enhancement)
+        var filteredActivities = uiState.activities
+
+        if (selectedActivityFilter != null) {
+            filteredActivities = filteredActivities.filter { activity ->
+                activity.activityType == selectedActivityFilter
+            }
+        }
+
+        // Display counter for filtered results
+        if (uiState.filter != FilterType.ALL || selectedActivityFilter != null) {
+            Surface(
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    text = "Zobrazeno ${filteredActivities.size} z ${uiState.totalActivitiesCount} aktivit",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+        }
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(
+                items = filteredActivities,
+                key = { it.id }
+            ) { activity ->
+                ActivityCard(
+                    activity = activity,
+                    onClick = { viewModel.onEditClick(activity.id) },
+                    onDelete = { viewModel.deleteActivity(activity) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LandscapeActivityLayout(
+    uiState: com.sporttracker.presentation.model.ActivityListUiState,
+    viewModel: ActivityListViewModel,
+    selectedActivityFilter: ActivityType?,
+    onActivityFilterChange: (ActivityType?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(modifier = modifier) {
+        // Left column - Filter panel (30% width)
+        Card(
+            modifier = Modifier
+                .weight(0.3f)
+                .fillMaxHeight()
+                .padding(start = 16.dp, top = 8.dp, bottom = 8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(12.dp)
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Text(
+                    text = "Filtry",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                // Storage type filters - vertical layout
+                Text(
+                    text = "Typ úložiště",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                StorageFilterType.entries.forEach { filterType ->
+                    FilterChip(
+                        selected = when(uiState.filter) {
+                            FilterType.ALL -> filterType == StorageFilterType.ALL
+                            FilterType.LOCAL -> filterType == StorageFilterType.LOCAL
+                            FilterType.REMOTE -> filterType == StorageFilterType.REMOTE
+                        },
+                        onClick = {
+                            viewModel.setFilter(
+                                when(filterType) {
+                                    StorageFilterType.ALL -> FilterType.ALL
+                                    StorageFilterType.LOCAL -> FilterType.LOCAL
+                                    StorageFilterType.REMOTE -> FilterType.REMOTE
+                                }
+                            )
+                        },
+                        label = {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = when (filterType) {
+                                        StorageFilterType.ALL -> Icons.Default.Storage
+                                        StorageFilterType.LOCAL -> Icons.Default.PhoneAndroid
+                                        StorageFilterType.REMOTE -> Icons.Default.Cloud
+                                    },
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(filterType.label)
+                            }
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = when (filterType) {
+                                StorageFilterType.LOCAL -> MaterialTheme.colorScheme.primaryContainer
+                                StorageFilterType.REMOTE -> MaterialTheme.colorScheme.secondaryContainer
+                                StorageFilterType.ALL -> MaterialTheme.colorScheme.tertiaryContainer
+                            }
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Activity type filters - vertical layout
+                if (uiState.activities.isNotEmpty()) {
+                    val activityTypes = uiState.activities
+                        .map { it.activityType }
+                        .distinct()
+                        .sortedBy { it.czechName }
+
+                    if (activityTypes.isNotEmpty()) {
+                        Text(
+                            text = "Sporty",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+
+                        FilterChip(
+                            selected = selectedActivityFilter == null,
+                            onClick = { onActivityFilterChange(null) },
+                            label = { Text("Všechny sporty") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 2.dp)
+                        )
+
+                        activityTypes.forEach { type ->
+                            FilterChip(
+                                selected = selectedActivityFilter == type,
+                                onClick = {
+                                    onActivityFilterChange(if (selectedActivityFilter == type) null else type)
+                                },
+                                label = { Text(type.czechName) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // Right column - Activities grid (70% width)
+        Column(
+            modifier = Modifier.weight(0.7f)
+        ) {
+            // Activities are already filtered by storage type in ViewModel
+            // Only apply activity type filter in UI (this is a UI-only enhancement)
+            var filteredActivities = uiState.activities
+
+            if (selectedActivityFilter != null) {
+                filteredActivities = filteredActivities.filter { activity ->
+                    activity.activityType == selectedActivityFilter
+                }
+            }
+
+            // Display counter for filtered results
+            if (uiState.filter != FilterType.ALL || selectedActivityFilter != null) {
+                Surface(
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = "Zobrazeno ${filteredActivities.size} z ${uiState.totalActivitiesCount} aktivit",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
+            }
+
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(end = 16.dp, top = 8.dp, bottom = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(
+                    items = filteredActivities,
+                    key = { it.id }
+                ) { activity ->
+                    ActivityCard(
+                        activity = activity,
+                        onClick = { viewModel.onEditClick(activity.id) },
+                        onDelete = { viewModel.deleteActivity(activity) }
+                    )
                 }
             }
         }
