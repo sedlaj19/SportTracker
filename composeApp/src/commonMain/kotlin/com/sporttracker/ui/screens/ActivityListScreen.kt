@@ -1,6 +1,7 @@
 package com.sporttracker.ui.screens
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
@@ -21,12 +22,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.sporttracker.domain.model.SportActivity
+import com.sporttracker.domain.model.StorageType
 import com.sporttracker.domain.util.NetworkMonitor
 import com.sporttracker.presentation.model.FilterType
 import com.sporttracker.presentation.viewmodel.ActivityListViewModel
 import com.sporttracker.ui.components.*
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
+
+enum class StorageFilterType(val label: String) {
+    ALL("Vše"),
+    LOCAL("Lokální"),
+    REMOTE("Vzdálené")
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -40,7 +48,7 @@ fun ActivityListScreen(
     val isOnline by networkMonitor.isOnline.collectAsState(initial = true)
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-    var selectedFilter by remember { mutableStateOf<String?>(null) }
+    var selectedActivityFilter by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -69,7 +77,7 @@ fun ActivityListScreen(
                         Column {
                             Text("SportTracker")
                             Text(
-                                text = "${uiState.activities.size} aktivit",
+                                text = "${uiState.totalActivitiesCount} aktivit",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -128,7 +136,76 @@ fun ActivityListScreen(
                     Column(
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        // Filter chips
+                        // Storage type filter (All | Local | Remote) - REQUIRED BY SPECIFICATION
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp)
+                            ) {
+                                Text(
+                                    text = "Typ úložiště",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(bottom = 8.dp)
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    StorageFilterType.entries.forEach { filterType ->
+                                        FilterChip(
+                                            selected = when(uiState.filter) {
+                                                FilterType.ALL -> filterType == StorageFilterType.ALL
+                                                FilterType.LOCAL -> filterType == StorageFilterType.LOCAL
+                                                FilterType.REMOTE -> filterType == StorageFilterType.REMOTE
+                                            },
+                                            onClick = {
+                                                viewModel.setFilter(
+                                                    when(filterType) {
+                                                        StorageFilterType.ALL -> FilterType.ALL
+                                                        StorageFilterType.LOCAL -> FilterType.LOCAL
+                                                        StorageFilterType.REMOTE -> FilterType.REMOTE
+                                                    }
+                                                )
+                                            },
+                                            label = {
+                                                Row(
+                                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Icon(
+                                                        imageVector = when (filterType) {
+                                                            StorageFilterType.ALL -> Icons.Default.Storage
+                                                            StorageFilterType.LOCAL -> Icons.Default.PhoneAndroid
+                                                            StorageFilterType.REMOTE -> Icons.Default.Cloud
+                                                        },
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(16.dp)
+                                                    )
+                                                    Text(filterType.label)
+                                                }
+                                            },
+                                            colors = FilterChipDefaults.filterChipColors(
+                                                selectedContainerColor = when (filterType) {
+                                                    StorageFilterType.LOCAL -> MaterialTheme.colorScheme.primaryContainer
+                                                    StorageFilterType.REMOTE -> MaterialTheme.colorScheme.secondaryContainer
+                                                    StorageFilterType.ALL -> MaterialTheme.colorScheme.tertiaryContainer
+                                                }
+                                            ),
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // Activity type filter (optional enhancement)
                         if (uiState.activities.isNotEmpty()) {
                             val activityTypes = uiState.activities
                                 .mapNotNull { activity ->
@@ -157,31 +234,34 @@ fun ActivityListScreen(
                                 ) {
                                     item {
                                         FilterChip(
-                                            selected = selectedFilter == null,
-                                            onClick = { selectedFilter = null },
-                                            label = { Text("Vše") }
+                                            selected = selectedActivityFilter == null,
+                                            onClick = { selectedActivityFilter = null },
+                                            label = { Text("Všechny sporty") }
                                         )
                                     }
                                     items(activityTypes.size) { index ->
                                         val type = activityTypes[index]
                                         FilterChip(
-                                            selected = selectedFilter == type,
+                                            selected = selectedActivityFilter == type,
                                             onClick = {
-                                                selectedFilter = if (selectedFilter == type) null else type
+                                                selectedActivityFilter = if (selectedActivityFilter == type) null else type
                                             },
                                             label = { Text(type) }
                                         )
                                     }
                                 }
-                                HorizontalDivider()
                             }
                         }
 
-                        val filteredActivities = if (selectedFilter == null) {
-                            uiState.activities
-                        } else {
-                            uiState.activities.filter { activity ->
-                                when(selectedFilter) {
+                        HorizontalDivider()
+
+                        // Activities are already filtered by storage type in ViewModel
+                        // Only apply activity type filter in UI (this is a UI-only enhancement)
+                        var filteredActivities = uiState.activities
+
+                        if (selectedActivityFilter != null) {
+                            filteredActivities = filteredActivities.filter { activity ->
+                                when(selectedActivityFilter) {
                                     "Běh" -> activity.name.contains("běh", ignoreCase = true) ||
                                             activity.name.contains("run", ignoreCase = true)
                                     "Kolo" -> activity.name.contains("kolo", ignoreCase = true) ||
@@ -195,6 +275,22 @@ fun ActivityListScreen(
                                                   activity.name.contains("gym", ignoreCase = true)
                                     else -> true
                                 }
+                            }
+                        }
+
+                        // Display counter for filtered results
+                        if (uiState.filter != FilterType.ALL || selectedActivityFilter != null) {
+                            Surface(
+                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "Zobrazeno ${filteredActivities.size} z ${uiState.totalActivitiesCount} aktivit",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.padding(8.dp)
+                                )
                             }
                         }
 
@@ -256,6 +352,27 @@ fun ActivityCard(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var isExpanded by remember { mutableStateOf(false) }
 
+    // Color coding based on storage type (REQUIRED BY SPECIFICATION)
+    val cardColors = when (activity.storageType) {
+        StorageType.LOCAL -> CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+        )
+        StorageType.REMOTE -> CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f)
+        )
+    }
+
+    val borderStroke = when (activity.storageType) {
+        StorageType.LOCAL -> BorderStroke(
+            2.dp,
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+        )
+        StorageType.REMOTE -> BorderStroke(
+            2.dp,
+            MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)
+        )
+    }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -264,11 +381,14 @@ fun ActivityCard(
                 onClick = onClick,
                 onLongClick = { isExpanded = !isExpanded }
             ),
-        colors = CardDefaults.cardColors(
-            containerColor = if (activity.syncStatus == com.sporttracker.domain.model.SyncStatus.ERROR)
-                MaterialTheme.colorScheme.errorContainer
-            else MaterialTheme.colorScheme.surface
-        )
+        colors = if (activity.syncStatus == com.sporttracker.domain.model.SyncStatus.ERROR) {
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer
+            )
+        } else {
+            cardColors
+        },
+        border = borderStroke
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -338,25 +458,31 @@ fun ActivityCard(
                             modifier = Modifier.height(28.dp)
                         )
 
-                        if (activity.storageType == com.sporttracker.domain.model.StorageType.REMOTE) {
-                            AssistChip(
-                                onClick = { },
-                                label = {
-                                    Text(
-                                        text = "Cloud",
-                                        style = MaterialTheme.typography.labelSmall
-                                    )
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        Icons.Default.Cloud,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                },
-                                modifier = Modifier.height(28.dp)
+                        // Storage type indicator with label
+                        AssistChip(
+                            onClick = { },
+                            label = {
+                                Text(
+                                    text = if (activity.storageType == StorageType.LOCAL) "Lokální" else "Vzdálené",
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = if (activity.storageType == StorageType.LOCAL)
+                                        Icons.Default.PhoneAndroid else Icons.Default.Cloud,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            },
+                            modifier = Modifier.height(28.dp),
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = if (activity.storageType == StorageType.LOCAL)
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                                else
+                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f)
                             )
-                        }
+                        )
 
                         if (activity.syncStatus != com.sporttracker.domain.model.SyncStatus.SYNCED) {
                             AssistChip(

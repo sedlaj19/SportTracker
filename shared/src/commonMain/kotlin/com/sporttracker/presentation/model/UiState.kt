@@ -6,6 +6,7 @@ import com.sporttracker.domain.model.StorageType
 // List Screen UI State
 data class ActivityListUiState(
     val activities: List<SportActivity> = emptyList(),
+    val totalActivitiesCount: Int = 0,
     val filter: FilterType = FilterType.ALL,
     val isLoading: Boolean = false,
     val error: String? = null,

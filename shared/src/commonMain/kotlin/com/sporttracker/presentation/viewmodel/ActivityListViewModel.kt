@@ -44,6 +44,7 @@ class ActivityListViewModel(
                 }
                 ActivityListUiState(
                     activities = filteredActivities,
+                    totalActivitiesCount = activities.size,
                     filter = filter,
                     isLoading = false
                 )
