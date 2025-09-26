@@ -1,0 +1,2 @@
+
+<shared_commonMain>: com.sporttracker.data.datasource:com.sporttracker.data.remote: com.sporttracker.data.repository:com.sporttracker.di:com.sporttracker.domain.model:"com.sporttracker.domain.repository:com.sporttracker.domain.usecase:com.sporttracker.domain.util:#com.sporttracker.presentation.model:'com.sporttracker.presentation.viewmodel
