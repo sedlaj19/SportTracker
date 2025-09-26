@@ -90,16 +90,15 @@ Kotlin Multiplatform (KMP) + Compose Multiplatform (CMP) aplikace pro sledován�
     - ✅ All landscape interactions working correctly
     - ✅ State preservation during rotation
     - ✅ Performance optimized for both orientations
-- [🔴] **Firebase integration** (NOT IMPLEMENTED - using Mock)
+- [🟡] **Firebase integration** (READY FOR IMPLEMENTATION)
   - ✅ Created FIREBASE_SETUP.md documentation
   - ✅ Added google-services plugin to build files
-  - ⚠️ **BLOCKED**: Firebase SDK requires JVM 17 (project uses JVM 11)
-  - ❌ FirebaseRemoteDataSource created but removed due to JVM conflicts
-  - ❌ FirebaseAuthService created but removed due to JVM conflicts
+  - ✅ **JVM 17 upgrade completed** - Firebase SDK compatibility resolved
+  - ❌ FirebaseRemoteDataSource created but removed (can be restored now)
+  - ❌ FirebaseAuthService created but removed (can be restored now)
   - 🟡 Currently using MockRemoteDataSource (in-memory only)
   - 🟡 Currently using MockAuthService (fake user ID)
-  - [ ] Upgrade entire project to JVM 17
-  - [ ] Restore Firebase implementations from androidMain
+  - [ ] Restore Firebase implementations from androidMain (ready to implement)
   - [ ] Set up actual Firebase project in console
   - [ ] Download real google-services.json
   - [ ] Test actual cloud synchronization
@@ -277,11 +276,11 @@ Kotlin Multiplatform (KMP) + Compose Multiplatform (CMP) aplikace pro sledován�
 
 **⚠️ Note:** App crash fixes moved to MVP Polish phase - focusing on core features first
 
-**📊 Progress: ~90% MVP Features Complete** (Landscape mode fully implemented and polished)
+**📊 Progress: ~92% MVP Features Complete** (JVM 17 upgrade completed, Firebase ready for implementation)
 
 **⚠️ IMPORTANT**: Firebase integration is NOT working. The app uses Mock services only. All data is stored locally even when "Remote" option is selected.
 
-**🔴 NEXT FOCUS**: Firebase integration (blocked by JVM 17 requirement) or moving to POST-MVP enhancements.
+**🔴 NEXT FOCUS**: Firebase integration (JVM 17 blocker resolved) or moving to POST-MVP enhancements.
 
 ---
 
@@ -306,7 +305,7 @@ Kotlin Multiplatform (KMP) + Compose Multiplatform (CMP) aplikace pro sledován�
 - Cross-device data sync
 
 ### 🟡 Technical Debt:
-- Need JVM 17 upgrade for Firebase support
-- Firebase code exists but removed due to compatibility
-- google-services.json is just example file
+- ✅ JVM 17 upgrade completed for Firebase support
+- Firebase code exists but removed due to compatibility (can be restored)
+- google-services.json is just example file (need real Firebase project setup)
 *This file tracks the overall project progress and should be updated as tasks are completed.*
