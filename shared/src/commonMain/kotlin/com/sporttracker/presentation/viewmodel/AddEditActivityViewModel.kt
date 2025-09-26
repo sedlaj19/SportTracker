@@ -146,6 +146,7 @@ class AddEditActivityViewModel(
 
             result
                 .onSuccess {
+                    _uiState.update { it.copy(isLoading = false) }
                     _events.emit(AddEditEvent.ShowSuccess(
                         if (state.isEditMode) "Aktivita upravena" else "Aktivita uložena"
                     ))

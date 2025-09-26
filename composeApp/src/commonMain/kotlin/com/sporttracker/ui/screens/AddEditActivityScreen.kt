@@ -55,7 +55,6 @@ fun AddEditActivityScreen(
                 }
                 is com.sporttracker.presentation.model.AddEditEvent.ShowSuccess -> {
                     snackbarHostState.showSnackbar(event.message)
-                    onNavigateBack()
                 }
             }
         }
@@ -108,11 +107,7 @@ fun AddEditActivityScreen(
                         selected = uiState.selectedActivityType == type,
                         onClick = {
                             viewModel.updateActivityType(type)
-                            if (uiState.name.isEmpty() || ActivityType.entries.any {
-                                it.czechName == uiState.name || it.englishName == uiState.name
-                            }) {
-                                viewModel.updateName(type.czechName)
-                            }
+                            viewModel.updateDuration(type.defaultDurationMinutes)
                         }
                     )
                 }
@@ -122,17 +117,9 @@ fun AddEditActivityScreen(
 
             OutlinedTextField(
                 value = uiState.name,
-                onValueChange = { name ->
-                    viewModel.updateName(name)
-                    // Auto-select type based on name
-                    val detectedType = ActivityType.entries.find {
-                        name.contains(it.czechName, ignoreCase = true) ||
-                        name.contains(it.englishName, ignoreCase = true)
-                    }
-                    detectedType?.let { viewModel.updateActivityType(it) }
-                },
+                onValueChange = viewModel::updateName,
                 label = { Text("Název aktivity") },
-                placeholder = { Text(uiState.selectedActivityType.czechName) },
+                placeholder = { Text("např. ${uiState.selectedActivityType.czechName}") },
                 leadingIcon = {
                     Icon(
                         imageVector = uiState.selectedActivityType.getIcon(),
@@ -179,31 +166,6 @@ fun AddEditActivityScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Typ aktivity:",
-                style = MaterialTheme.typography.labelLarge
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(horizontal = 0.dp)
-            ) {
-                items(ActivityType.entries) { type ->
-                    ActivityTypeChip(
-                        type = type,
-                        selected = uiState.selectedActivityType == type,
-                        onClick = {
-                            viewModel.updateActivityType(type)
-                            viewModel.updateDuration(type.defaultDurationMinutes)
-                        }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
                 text = "Uložit jako:",
                 style = MaterialTheme.typography.labelLarge
             )
@@ -217,12 +179,44 @@ fun AddEditActivityScreen(
                 FilterChip(
                     selected = uiState.selectedStorage == StorageType.LOCAL,
                     onClick = { viewModel.updateStorageType(StorageType.LOCAL) },
-                    label = { Text("📱 Lokálně") }
+                    label = { Text("📱 Lokálně") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        containerColor = if (uiState.selectedStorage == StorageType.LOCAL) {
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+                        } else {
+                            MaterialTheme.colorScheme.surface
+                        },
+                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = uiState.selectedStorage == StorageType.LOCAL,
+                        borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                        selectedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                        borderWidth = 1.dp,
+                        selectedBorderWidth = 2.dp
+                    )
                 )
                 FilterChip(
                     selected = uiState.selectedStorage == StorageType.REMOTE,
                     onClick = { viewModel.updateStorageType(StorageType.REMOTE) },
-                    label = { Text("☁️ Na cloud") }
+                    label = { Text("☁️ Na cloud") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        containerColor = if (uiState.selectedStorage == StorageType.REMOTE) {
+                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f)
+                        } else {
+                            MaterialTheme.colorScheme.surface
+                        },
+                        selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f)
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = uiState.selectedStorage == StorageType.REMOTE,
+                        borderColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
+                        selectedBorderColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
+                        borderWidth = 1.dp,
+                        selectedBorderWidth = 2.dp
+                    )
                 )
             }
 
@@ -260,15 +254,6 @@ fun AddEditActivityScreen(
     }
 }
 
-private fun formatDurationForEdit(minutes: Int): String {
-    val hours = minutes / 60
-    val mins = minutes % 60
-    return when {
-        hours > 0 && mins > 0 -> "$hours h $mins min"
-        hours > 0 -> "$hours h"
-        else -> "$mins min"
-    }
-}
 
 fun ActivityType.getIcon(): ImageVector = when (this) {
     ActivityType.RUNNING -> Icons.AutoMirrored.Filled.DirectionsRun

@@ -9,6 +9,8 @@ import com.sporttracker.domain.repository.SportActivityRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
 import kotlin.time.Clock
 
@@ -37,33 +39,33 @@ class SportActivityRepositoryImpl(
                 }
                 StorageType.REMOTE -> {
                     // Save locally first with PENDING status
-                    localDataSource.insert(
-                        activityWithTimestamp.copy(syncStatus = SyncStatus.PENDING)
-                    )
+                    val pendingActivity = activityWithTimestamp.copy(syncStatus = SyncStatus.PENDING)
+                    localDataSource.insert(pendingActivity)
 
-                    // Try to save remotely
+                    // Try to save remotely in background - don't block UI
                     val userId = getUserId()
                     if (userId != null) {
-                        remoteDataSource.saveActivity(userId, activityWithTimestamp)
-                            .fold(
-                                onSuccess = {
-                                    // Update local with SYNCED status
-                                    localDataSource.update(
-                                        activityWithTimestamp.copy(syncStatus = SyncStatus.SYNCED)
-                                    )
-                                    Result.success(Unit)
-                                },
-                                onFailure = { error ->
-                                    // Keep local with PENDING status for later sync
-                                    localDataSource.update(
-                                        activityWithTimestamp.copy(syncStatus = SyncStatus.ERROR)
-                                    )
-                                    Result.failure(error)
-                                }
-                            )
-                    } else {
-                        Result.failure(Exception("User not authenticated"))
+                        GlobalScope.launch {
+                            remoteDataSource.saveActivity(userId, activityWithTimestamp)
+                                .fold(
+                                    onSuccess = {
+                                        // Update local with SYNCED status
+                                        localDataSource.update(
+                                            activityWithTimestamp.copy(syncStatus = SyncStatus.SYNCED)
+                                        )
+                                    },
+                                    onFailure = {
+                                        // Keep local with ERROR status for later sync
+                                        localDataSource.update(
+                                            activityWithTimestamp.copy(syncStatus = SyncStatus.ERROR)
+                                        )
+                                    }
+                                )
+                        }
                     }
+
+                    // Return success immediately after local save
+                    Result.success(Unit)
                 }
             }
         } catch (e: Exception) {
@@ -85,33 +87,33 @@ class SportActivityRepositoryImpl(
                 }
                 StorageType.REMOTE -> {
                     // Update locally first with PENDING status
-                    localDataSource.update(
-                        activityWithTimestamp.copy(syncStatus = SyncStatus.PENDING)
-                    )
+                    val pendingActivity = activityWithTimestamp.copy(syncStatus = SyncStatus.PENDING)
+                    localDataSource.update(pendingActivity)
 
-                    // Try to update remotely
+                    // Try to update remotely in background - don't block UI
                     val userId = getUserId()
                     if (userId != null) {
-                        remoteDataSource.updateActivity(userId, activityWithTimestamp)
-                            .fold(
-                                onSuccess = {
-                                    // Update local with SYNCED status
-                                    localDataSource.update(
-                                        activityWithTimestamp.copy(syncStatus = SyncStatus.SYNCED)
-                                    )
-                                    Result.success(Unit)
-                                },
-                                onFailure = { error ->
-                                    // Keep local with ERROR status for later sync
-                                    localDataSource.update(
-                                        activityWithTimestamp.copy(syncStatus = SyncStatus.ERROR)
-                                    )
-                                    Result.failure(error)
-                                }
-                            )
-                    } else {
-                        Result.failure(Exception("User not authenticated"))
+                        GlobalScope.launch {
+                            remoteDataSource.updateActivity(userId, activityWithTimestamp)
+                                .fold(
+                                    onSuccess = {
+                                        // Update local with SYNCED status
+                                        localDataSource.update(
+                                            activityWithTimestamp.copy(syncStatus = SyncStatus.SYNCED)
+                                        )
+                                    },
+                                    onFailure = {
+                                        // Keep local with ERROR status for later sync
+                                        localDataSource.update(
+                                            activityWithTimestamp.copy(syncStatus = SyncStatus.ERROR)
+                                        )
+                                    }
+                                )
+                        }
                     }
+
+                    // Return success immediately after local save
+                    Result.success(Unit)
                 }
             }
         } catch (e: Exception) {

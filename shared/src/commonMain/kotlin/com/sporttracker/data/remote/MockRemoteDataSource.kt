@@ -13,13 +13,13 @@ class MockRemoteDataSource : RemoteDataSource {
     }
 
     override suspend fun saveActivity(userId: String, activity: SportActivity): Result<Unit> {
-        delay(500)
+        delay(500) // Simulate network delay
         remoteActivities.add(activity.copy(userId = userId))
         return Result.success(Unit)
     }
 
     override suspend fun updateActivity(userId: String, activity: SportActivity): Result<Unit> {
-        delay(500)
+        delay(500) // Simulate network delay
         val index = remoteActivities.indexOfFirst { it.id == activity.id }
         if (index != -1) {
             remoteActivities[index] = activity.copy(userId = userId)
