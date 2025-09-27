@@ -38,6 +38,10 @@ kotlin {
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.room.runtime)
             implementation(libs.room.ktx)
+
+            // Firebase - use specific versions instead of BOM in multiplatform
+            implementation("com.google.firebase:firebase-firestore-ktx:25.0.0")
+            implementation("com.google.firebase:firebase-auth-ktx:23.0.0")
         }
 
         iosMain.dependencies {
