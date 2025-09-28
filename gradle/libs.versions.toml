@@ -24,6 +24,9 @@ ksp = "2.2.20-2.0.3"
 firebase = "34.3.0"
 firebaseKotlinSdk = "2.3.0"
 coil = "3.3.0"
+mockk = "1.13.13"
+turbine = "1.2.0"
+coroutinesTest = "1.10.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -73,6 +76,12 @@ firebase-kotlin-auth = { group = "dev.gitlive", name = "firebase-auth", version.
 # Coil
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 coil-network = { group = "io.coil-kt.coil3", name = "coil-network-ktor3", version.ref = "coil" }
+
+# Testing
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
+koin-test = { group = "io.insert-koin", name = "koin-test", version.ref = "koin" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
