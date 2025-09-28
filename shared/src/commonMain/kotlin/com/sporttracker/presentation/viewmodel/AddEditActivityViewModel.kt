@@ -7,6 +7,7 @@ import com.sporttracker.domain.model.SportActivity
 import com.sporttracker.domain.model.StorageType
 import com.sporttracker.domain.usecase.SaveActivityUseCase
 import com.sporttracker.domain.usecase.UpdateActivityUseCase
+import com.sporttracker.domain.usecase.DeleteActivityUseCase
 import com.sporttracker.domain.repository.SportActivityRepository
 import com.sporttracker.presentation.model.AddEditActivityUiState
 import com.sporttracker.presentation.model.AddEditEvent
@@ -16,6 +17,7 @@ import kotlinx.coroutines.launch
 class AddEditActivityViewModel(
     private val saveActivityUseCase: SaveActivityUseCase,
     private val updateActivityUseCase: UpdateActivityUseCase,
+    private val deleteActivityUseCase: DeleteActivityUseCase,
     private val repository: SportActivityRepository
 ) : ViewModel() {
 
@@ -93,6 +95,30 @@ class AddEditActivityViewModel(
 
     fun updateStorageType(storageType: StorageType) {
         _uiState.update { it.copy(selectedStorage = storageType) }
+    }
+
+    fun deleteActivity() {
+        val state = _uiState.value
+        val currentId = state.id
+        
+        if (!state.isEditMode || currentId.isNullOrBlank()) {
+            return // Cannot delete activity that doesn't exist
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+
+            deleteActivityUseCase(currentId)
+                .onSuccess {
+                    _uiState.update { it.copy(isLoading = false) }
+                    _events.emit(AddEditEvent.ShowSuccess("Aktivita smazána"))
+                    _events.emit(AddEditEvent.NavigateBack)
+                }
+                .onFailure { error ->
+                    _uiState.update { it.copy(isLoading = false) }
+                    _events.emit(AddEditEvent.ShowError(error.message ?: "Chyba při mazání"))
+                }
+        }
     }
 
     fun saveActivity() {

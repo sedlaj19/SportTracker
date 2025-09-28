@@ -38,6 +38,7 @@ val appModule = module {
         AddEditActivityViewModel(
             saveActivityUseCase = get(),
             updateActivityUseCase = get(),
+            deleteActivityUseCase = get(),
             repository = get()
         )
     }

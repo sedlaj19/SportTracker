@@ -41,6 +41,7 @@ fun AddEditActivityScreen(
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var showDurationPicker by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     val orientationMode = getOrientationMode()
 
     LaunchedEffect(activityId) {
@@ -75,6 +76,18 @@ fun AddEditActivityScreen(
                     }
                 },
                 actions = {
+                    if (uiState.isEditMode) {
+                        IconButton(
+                            onClick = { showDeleteDialog = true },
+                            enabled = !uiState.isLoading
+                        ) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = "Smazat",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
                     IconButton(
                         onClick = { viewModel.saveActivity() },
                         enabled = !uiState.isLoading
@@ -124,6 +137,36 @@ fun AddEditActivityScreen(
             },
             onDismiss = {
                 showDurationPicker = false
+            }
+        )
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Smazat aktivitu?") },
+            text = {
+                Text("Opravdu chcete smazat aktivitu '${uiState.name}'? Tuto akci nelze vrátit zpět.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteActivity()
+                        showDeleteDialog = false
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Smazat")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDeleteDialog = false }
+                ) {
+                    Text("Zrušit")
+                }
             }
         )
     }
