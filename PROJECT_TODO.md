@@ -144,16 +144,18 @@ Kotlin Multiplatform (KMP) + Compose Multiplatform (CMP) aplikace pro sledován�
   - [ ] Swipe-to-delete gesture
   - [ ] Pull-to-refresh implementation
   - [ ] Activity search by name/location
-- [🟡] **Activity filtering system**
+- ✅ **Activity filtering system**
   - ✅ Filter by activity type (dynamic)
   - ✅ Filter by storage type (Local/Remote)
-  - [ ] **Empty state for filtered results** - placeholder when filters result in no activities
-    - [ ] **CRITICAL UX ISSUE**: Replace full empty screen with inline message to keep filters accessible
-    - [ ] Show message in place of activity list (not full screen overlay) so filters remain interactive
-    - [ ] "No activities match your current filters" message with clear visual hierarchy
-    - [ ] Suggestions to adjust filters or add new activities
-    - [ ] Different messages for specific filter combinations (e.g., "No local activities found")
-    - [ ] Keep filter panel always visible and functional even when no results
+  - ✅ **Empty state for filtered results** - placeholder when filters result in no activities
+    - ✅ **CRITICAL UX ISSUE FIXED**: Replaced full empty screen with inline message to keep filters accessible
+    - ✅ Show message in place of activity list (not full screen overlay) so filters remain interactive
+    - ✅ "No activities match your current filters" message with clear visual hierarchy
+    - ✅ Intelligent filter description showing active filters (e.g., "Úložiště: Lokální • Sport: Běh")
+    - ✅ Clear all filters button for quick reset
+    - ✅ Different behavior for "no activities at all" vs "no results from filters"
+    - ✅ Keep filter panel always visible and functional even when no results
+    - ✅ Works in both portrait and landscape modes
   - [ ] Date range filtering
   - [ ] Activity duration filtering
 - [ ] **Activity details screen**
@@ -288,7 +290,7 @@ Kotlin Multiplatform (KMP) + Compose Multiplatform (CMP) aplikace pro sledován�
 
 ---
 
-*Last updated: 2025-01-26*
+*Last updated: 2025-01-28*
 
 ## Current App Status
 
@@ -308,7 +310,8 @@ Kotlin Multiplatform (KMP) + Compose Multiplatform (CMP) aplikace pro sledován�
 - ✅ **User authentication** - anonymous auth working
 - ✅ **Cross-device data sync** - Firestore synchronization active
 
-### 🟡 Known UX Issues:
-- ❌ **Filter empty state UX** - when filters result in no activities, entire screen shows empty state, making filters inaccessible
-- ❌ **Need inline empty message** - show message in place of activity list instead of full screen overlay
+### ✅ Recent Improvements:
+- ✅ **Filter empty state UX FIXED** - intelligent empty states that keep filters accessible
+- ✅ **Inline empty messages** - contextual messages in place of activity list with filter information
+- ✅ **Smart filter descriptions** - shows active filters and provides quick reset option
 *This file tracks the overall project progress and should be updated as tasks are completed.*

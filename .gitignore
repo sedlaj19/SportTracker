@@ -235,6 +235,9 @@ kotlin-native/
 .crashlytics/
 fabric.properties
 
+# Claude Code
+.claude/
+
 # Project specific
 /reports/
 /test-results/
