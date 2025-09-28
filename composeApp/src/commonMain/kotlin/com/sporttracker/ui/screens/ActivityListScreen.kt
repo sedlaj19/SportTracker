@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
@@ -25,6 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import com.sporttracker.domain.model.ActivityType
 import com.sporttracker.domain.model.SportActivity
@@ -136,12 +139,14 @@ fun ActivityListScreen(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
-                uiState.activities.isEmpty() -> {
+                uiState.totalActivitiesCount == 0 -> {
+                    // No activities at all - show the general empty state
                     EmptyState(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
                 else -> {
+                    // Has activities (totalActivitiesCount > 0) - show layout with filter-aware empty states
                     when (orientationMode) {
                         OrientationMode.PORTRAIT -> {
                             PortraitActivityLayout(
@@ -312,15 +317,33 @@ private fun PortraitActivityLayout(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(
-                items = filteredActivities,
-                key = { it.id }
-            ) { activity ->
-                ActivityCard(
-                    activity = activity,
-                    onClick = { viewModel.onEditClick(activity.id) },
-                    onDelete = { viewModel.deleteActivity(activity) }
-                )
+            if (filteredActivities.isEmpty()) {
+                // Inline empty state message instead of full screen overlay
+                item {
+                    FilteredEmptyState(
+                        hasAnyActivities = uiState.activities.isNotEmpty(),
+                        currentFilter = uiState.filter,
+                        selectedActivityType = selectedActivityFilter,
+                        onClearFilters = {
+                            viewModel.setFilter(FilterType.ALL)
+                            onActivityFilterChange(null)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 32.dp)
+                    )
+                }
+            } else {
+                items(
+                    items = filteredActivities,
+                    key = { it.id }
+                ) { activity ->
+                    ActivityCard(
+                        activity = activity,
+                        onClick = { viewModel.onEditClick(activity.id) },
+                        onDelete = { viewModel.deleteActivity(activity) }
+                    )
+                }
             }
         }
     }
@@ -452,6 +475,26 @@ private fun LandscapeActivityLayout(
                         }
                     }
                 }
+                
+                // Clear all filters button
+                if (uiState.filter != FilterType.ALL || selectedActivityFilter != null) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedButton(
+                        onClick = {
+                            viewModel.setFilter(FilterType.ALL)
+                            onActivityFilterChange(null)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            Icons.Default.Clear,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Zrušit filtry", fontSize = 12.sp)
+                    }
+                }
             }
         }
 
@@ -494,15 +537,33 @@ private fun LandscapeActivityLayout(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(
-                    items = filteredActivities,
-                    key = { it.id }
-                ) { activity ->
-                    ActivityCard(
-                        activity = activity,
-                        onClick = { viewModel.onEditClick(activity.id) },
-                        onDelete = { viewModel.deleteActivity(activity) }
-                    )
+                if (filteredActivities.isEmpty()) {
+                    // Inline empty state message for landscape mode
+                    item(span = { GridItemSpan(2) }) {
+                        FilteredEmptyState(
+                            hasAnyActivities = uiState.activities.isNotEmpty(),
+                            currentFilter = uiState.filter,
+                            selectedActivityType = selectedActivityFilter,
+                            onClearFilters = {
+                                viewModel.setFilter(FilterType.ALL)
+                                onActivityFilterChange(null)
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 32.dp)
+                        )
+                    }
+                } else {
+                    items(
+                        items = filteredActivities,
+                        key = { it.id }
+                    ) { activity ->
+                        ActivityCard(
+                            activity = activity,
+                            onClick = { viewModel.onEditClick(activity.id) },
+                            onDelete = { viewModel.deleteActivity(activity) }
+                        )
+                    }
                 }
             }
         }
@@ -530,6 +591,88 @@ fun EmptyState(modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+    }
+}
+
+@Composable
+fun FilteredEmptyState(
+    hasAnyActivities: Boolean,
+    currentFilter: FilterType,
+    selectedActivityType: ActivityType?,
+    onClearFilters: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        if (hasAnyActivities) {
+            // User has activities, but filters result in no matches
+            Text(
+                text = "🔍",
+                style = MaterialTheme.typography.displaySmall
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Žádné aktivity nevyhovují filtru",
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            val filterDescription = buildString {
+                if (currentFilter != FilterType.ALL) {
+                    append("Úložiště: ")
+                    append(when (currentFilter) {
+                        FilterType.LOCAL -> "Lokální"
+                        FilterType.REMOTE -> "Vzdálené"
+                        FilterType.ALL -> "Všechny"
+                    })
+                }
+                if (selectedActivityType != null) {
+                    if (currentFilter != FilterType.ALL) append(" • ")
+                    append("Sport: ${selectedActivityType.czechName}")
+                }
+            }
+            
+            Text(
+                text = "Aktivní filtry: $filterDescription",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            OutlinedButton(
+                onClick = onClearFilters
+            ) {
+                Icon(
+                    Icons.Default.Clear,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Zrušit všechny filtry")
+            }
+        } else {
+            // No activities at all
+            Text(
+                text = "🏃‍♂️ 🚴‍♀️ 🏊‍♂️",
+                style = MaterialTheme.typography.displayMedium
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Zatím nemáte žádné aktivity",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Začněte kliknutím na +",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 
