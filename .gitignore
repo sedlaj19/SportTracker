@@ -69,6 +69,8 @@ captures/
 .idea/usage.statistics.xml
 .idea/.name
 .idea/runConfigurations/
+.idea/appInsightsSettings.xml
+.idea/deploymentTargetSelector.xml
 
 # Keystore files
 *.jks
