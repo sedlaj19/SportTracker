@@ -13,7 +13,6 @@
 # Generated files
 bin/
 gen/
-out/
 # Uncomment the following line in case you need and you don't have the release build type files in your app
 # release/
 
@@ -41,36 +40,9 @@ proguard/
 # Android Studio captures folder
 captures/
 
-# IntelliJ
+# IntelliJ - ignore everything in .idea folder
 *.iml
 .idea/
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/gradle.xml
-.idea/assetWizardSettings.xml
-.idea/dictionaries
-.idea/libraries
-.idea/jarRepositories.xml
-.idea/caches
-.idea/modules.xml
-.idea/navEditor.xml
-.idea/deploymentTargetDropDown.xml
-.idea/misc.xml
-.idea/vcs.xml
-.idea/kotlinc.xml
-.idea/migrations.xml
-.idea/compiler.xml
-.idea/inspectionProfiles/
-.idea/sonarlint/
-.idea/httpRequests/
-.idea/dataSources/
-.idea/dataSources.local.xml
-.idea/shelf/
-.idea/usage.statistics.xml
-.idea/.name
-.idea/runConfigurations/
-.idea/appInsightsSettings.xml
-.idea/deploymentTargetSelector.xml
 
 # Keystore files
 *.jks
@@ -113,11 +85,8 @@ lint/reports/
 # OS-specific files
 .DS_Store
 .DS_Store?
-._*
 .Spotlight-V100
 .Trashes
-ehthumbs.db
-Thumbs.db
 
 # Kotlin Multiplatform specific
 .kotlin/
@@ -139,18 +108,8 @@ kspCaches/
 **/generated/
 **/build/generated/
 
-# Gradle cache
-.gradle/
-gradle-app.setting
-!gradle-wrapper.jar
-
 # Build outputs
-build/
-*/build/
-**/build/
 out/
-*/out/
-**/out/
 target/
 
 # Test reports
@@ -218,10 +177,7 @@ $RECYCLE.BIN/
 
 # Backup files
 *.backup
-*.bak
-*.tmp
 *.old
-*.orig
 
 # Cache files
 .cache/
@@ -239,6 +195,9 @@ fabric.properties
 
 # Claude Code
 .claude/
+
+# Serena (Claude Code semantic tools)
+.serena/
 
 # Project specific
 /reports/
