@@ -39,7 +39,8 @@ val appModule = module {
             saveActivityUseCase = get(),
             updateActivityUseCase = get(),
             deleteActivityUseCase = get(),
-            repository = get()
+            repository = get(),
+            toast = get()
         )
     }
 }

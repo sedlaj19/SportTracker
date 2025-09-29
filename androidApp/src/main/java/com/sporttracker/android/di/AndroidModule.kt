@@ -11,6 +11,8 @@ import com.sporttracker.data.remote.FirebaseRemoteDataSource
 import com.sporttracker.data.auth.AuthService
 import com.sporttracker.data.auth.FirebaseAuthService
 import com.sporttracker.domain.util.NetworkMonitor
+import com.sporttracker.platform.Toast
+import com.sporttracker.platform.createToast
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -39,5 +41,9 @@ val androidModule = module {
 
     single<NetworkMonitor> {
         AndroidNetworkMonitor(androidContext())
+    }
+
+    single<Toast> {
+        createToast()
     }
 }

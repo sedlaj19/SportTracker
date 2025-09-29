@@ -18,7 +18,8 @@ class AddEditActivityViewModel(
     private val saveActivityUseCase: SaveActivityUseCase,
     private val updateActivityUseCase: UpdateActivityUseCase,
     private val deleteActivityUseCase: DeleteActivityUseCase,
-    private val repository: SportActivityRepository
+    private val repository: SportActivityRepository,
+    private val toast: com.sporttracker.platform.Toast
 ) : ViewModel() {
 
     private var activityId: String? = null
@@ -111,12 +112,12 @@ class AddEditActivityViewModel(
             deleteActivityUseCase(currentId)
                 .onSuccess {
                     _uiState.update { it.copy(isLoading = false) }
-                    _events.emit(AddEditEvent.ShowSuccess("Aktivita smazána"))
+                    toast.show("Aktivita smazána")
                     _events.emit(AddEditEvent.NavigateBack)
                 }
                 .onFailure { error ->
                     _uiState.update { it.copy(isLoading = false) }
-                    _events.emit(AddEditEvent.ShowError(error.message ?: "Chyba při mazání"))
+                    toast.show(error.message ?: "Chyba při mazání")
                 }
         }
     }
@@ -140,9 +141,13 @@ class AddEditActivityViewModel(
             return
         }
 
+        // Navigate back immediately after validation passes
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            _events.emit(AddEditEvent.NavigateBack)
+        }
 
+        // Save activity in background
+        viewModelScope.launch {
             val activity = if (state.isEditMode && state.id != null) {
                 // Update existing activity
                 SportActivity(
@@ -172,15 +177,12 @@ class AddEditActivityViewModel(
 
             result
                 .onSuccess {
-                    _uiState.update { it.copy(isLoading = false) }
-                    _events.emit(AddEditEvent.ShowSuccess(
+                    toast.show(
                         if (state.isEditMode) "Aktivita upravena" else "Aktivita uložena"
-                    ))
-                    _events.emit(AddEditEvent.NavigateBack)
+                    )
                 }
                 .onFailure { error ->
-                    _uiState.update { it.copy(isLoading = false) }
-                    _events.emit(AddEditEvent.ShowError(error.message ?: "Chyba při ukládání"))
+                    toast.show(error.message ?: "Chyba při ukládání")
                 }
         }
     }
